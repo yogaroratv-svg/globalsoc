@@ -1,0 +1,10 @@
+// Azure Firewall application-rule hits for Claude/Anthropic FQDNs.
+// Platform: Sentinel / Log Analytics, resource-specific table AZFWApplicationRule.
+let ClaudeDomains = dynamic(["claude.ai", "claude.com", "anthropic.com", "claudeusercontent.com"]);
+AZFWApplicationRule
+| where TimeGenerated > ago(30d)
+| where Fqdn has_any (ClaudeDomains)
+| summarize Requests = count(), FirstSeen = min(TimeGenerated), LastSeen = max(TimeGenerated),
+            Actions = make_set(Action), Rules = make_set(Rule)
+    by SourceIp, Fqdn
+| order by Requests desc

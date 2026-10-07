@@ -1,0 +1,18 @@
+// Claude tooling on endpoints: Claude Code installs/runs, Remote Control (`claude rc`), Claude Desktop.
+// Platform: MDE Advanced Hunting. For Sentinel, replace Timestamp with TimeGenerated.
+// Caveat: file-name matching is defeated by renaming the binary; pair with mde-03 network results.
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where FileName in~ ("claude.exe", "claude")
+    or FolderPath has_any (@"\AnthropicClaude\", @"\.local\bin\", "@anthropic-ai")
+    or (FileName in~ ("node.exe", "node") and ProcessCommandLine has "@anthropic-ai")
+    or ProcessCommandLine has_any ("@anthropic-ai/claude-code", "claude.ai/install.ps1",
+                                   "claude.ai/install.cmd", "claude.ai/install.sh")
+| extend Category = case(
+    ProcessCommandLine matches regex @"(?i)(\bclaude(\.exe)?""?|claude-code\S*)\s+(rc|remote-control)\b", "Remote Control",
+    ProcessCommandLine has_any ("install.ps1", "install.cmd", "install.sh", "npm install", "npm i "), "Install",
+    FolderPath has @"\AnthropicClaude\", "Claude Desktop",
+    "Claude Code / other")
+| project Timestamp, DeviceName, AccountName, Category, FileName, FolderPath,
+          ProcessCommandLine, InitiatingProcessFileName, InitiatingProcessCommandLine, SHA256
+| order by Timestamp desc

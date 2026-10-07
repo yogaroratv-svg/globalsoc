@@ -1,0 +1,12 @@
+// Connections to Claude/Anthropic domains, grouped by initiating process.
+// chrome.exe / msedge.exe => website or extension; claude.exe / node.exe => Claude Code or Desktop.
+// Platform: MDE Advanced Hunting. For Sentinel, replace Timestamp with TimeGenerated.
+// Domain list is a starting point - extend with any Anthropic domains seen in results.
+let ClaudeDomains = dynamic(["claude.ai", "claude.com", "anthropic.com", "claudeusercontent.com"]);
+DeviceNetworkEvents
+| where Timestamp > ago(30d)
+| where RemoteUrl has_any (ClaudeDomains)
+| summarize Connections = count(), FirstSeen = min(Timestamp), LastSeen = max(Timestamp),
+            Urls = make_set(RemoteUrl, 20)
+    by DeviceName, InitiatingProcessAccountName, InitiatingProcessFileName
+| order by Connections desc

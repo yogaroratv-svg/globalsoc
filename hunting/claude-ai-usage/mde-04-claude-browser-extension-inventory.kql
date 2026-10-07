@@ -1,0 +1,10 @@
+// Browser extensions named Claude or published by Anthropic (also surfaces look-alikes).
+// Platform: MDE Advanced Hunting only - DeviceTvm* tables are not streamed to Sentinel.
+// To scope to the official extension, filter on ExtensionId taken from its Chrome Web Store URL.
+DeviceTvmBrowserExtensions
+| where ExtensionName has "Claude" or ExtensionVendor has "Anthropic"
+| join kind=leftouter (
+    DeviceInfo | summarize arg_max(Timestamp, DeviceName) by DeviceId
+  ) on DeviceId
+| project DeviceName, BrowserName, ExtensionName, ExtensionId, ExtensionVersion,
+          ExtensionVendor, IsActivated, ExtensionRisk

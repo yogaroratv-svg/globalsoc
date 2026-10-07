@@ -1,0 +1,11 @@
+// Commands executed by Claude Code (direct children, and grandchildren via its Git Bash shell).
+// Platform: MDE Advanced Hunting. For Sentinel, replace Timestamp with TimeGenerated.
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where InitiatingProcessFileName =~ "claude.exe"
+    or InitiatingProcessParentFileName =~ "claude.exe"
+    or InitiatingProcessCommandLine has "@anthropic-ai/claude-code"
+| where FileName !in~ ("conhost.exe")
+| project Timestamp, DeviceName, AccountName, Parent = InitiatingProcessFileName,
+          FileName, ProcessCommandLine
+| order by Timestamp desc

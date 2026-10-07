@@ -1,0 +1,7 @@
+// DNS lookups of Claude/Anthropic domains through Azure Firewall DNS proxy.
+// Platform: Sentinel / Log Analytics. Requires DNS proxy enabled on the firewall.
+let ClaudeDomains = dynamic(["claude.ai", "claude.com", "anthropic.com", "claudeusercontent.com"]);
+AZFWDnsQuery
+| where TimeGenerated > ago(30d)
+| where QueryName has_any (ClaudeDomains)
+| summarize Queries = count(), LastSeen = max(TimeGenerated) by SourceIp, QueryName

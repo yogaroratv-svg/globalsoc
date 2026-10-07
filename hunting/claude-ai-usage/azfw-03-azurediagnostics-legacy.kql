@@ -1,0 +1,9 @@
+// Azure Firewall application-rule hits for Claude/Anthropic FQDNs - legacy AzureDiagnostics format.
+// Platform: Sentinel / Log Analytics, for firewalls not yet on resource-specific tables.
+let ClaudeDomains = dynamic(["claude.ai", "claude.com", "anthropic.com", "claudeusercontent.com"]);
+AzureDiagnostics
+| where TimeGenerated > ago(30d)
+| where Category == "AzureFirewallApplicationRule"
+| where msg_s has_any (ClaudeDomains)
+| parse msg_s with Protocol " request from " SourceIp ":" SourcePort " to " Fqdn ":" DestPort ". Action: " Action "." *
+| summarize Requests = count(), LastSeen = max(TimeGenerated) by SourceIp, Fqdn, Action
